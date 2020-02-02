@@ -15,9 +15,9 @@ import {
   bindEvents,
   unbindEvents,
   refineRangeBoundaries,
-  unique,
   sortByDepth,
   groupHighlights,
+  normalizeHighlights,
 } from './utils';
 import {
   TIMESTAMP_ATTR, NODE_TYPE, IGNORE_TAGS, DATA_ATTR,
@@ -110,7 +110,7 @@ class TextHighlighter {
       wrapper.setAttribute(TIMESTAMP_ATTR, timestamp);
 
       createdHighlights = this.highlightRange(range, wrapper);
-      normalizedHighlights = this.normalizeHighlights(createdHighlights);
+      normalizedHighlights = normalizeHighlights(createdHighlights);
 
       this.options.onAfterHighlight(range, normalizedHighlights, timestamp);
     }
@@ -181,31 +181,6 @@ class TextHighlighter {
     } while (!done);
 
     return highlights;
-  }
-
-
-  /**
-   * Normalizes highlights. Ensures that highlighting is done with use of the smallest
-   * possible number of wrapping HTML elements.
-   * Flattens highlights structure and merges sibling highlights. Normalizes text nodes
-   * within highlights.
-   * @param {Array} highlights - highlights to normalize.
-   * @returns {Array} - array of normalized highlights.
-   *  Order and number of returned highlights may be different than input highlights.
-   */
-  normalizeHighlights(highlights) {
-    let normalizedHighlights;
-
-    this.flattenNestedHighlights(highlights);
-    this.mergeSiblingHighlights(highlights);
-
-    // omit removed nodes
-    normalizedHighlights = highlights.filter((hl) => (hl.parentElement ? hl : null));
-
-    normalizedHighlights = unique(normalizedHighlights);
-    normalizedHighlights.sort((a, b) => a.offsetTop - b.offsetTop || a.offsetLeft - b.offsetLeft);
-
-    return normalizedHighlights;
   }
 
   /**
