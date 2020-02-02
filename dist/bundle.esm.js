@@ -1,27 +1,330 @@
-import {
-  addClass,
-  removeClass,
-  getRange,
-  removeAllRanges,
-  contains,
-  wrap,
-  unwrap,
-  remove,
-  fromHTML,
-  getWindow,
-} from './dom';
-import {
-  defaults,
-  bindEvents,
-  unbindEvents,
-  refineRangeBoundaries,
-  unique,
-  sortByDepth,
-  groupHighlights,
-} from './utils';
-import {
-  TIMESTAMP_ATTR, NODE_TYPE, IGNORE_TAGS, DATA_ATTR,
-} from './constants';
+/**
+ * Adds class to element.
+ * @param {Node|HTMLElement} [el] - base DOM element to manipulate
+ * @param {string} className
+ */
+
+function addClass (el, className) {
+  if (el.classList) {
+    el.classList.add(className);
+  } else {
+    el.className += ` ${className}`;
+  }
+}
+
+/**
+ * Returns true if base element contains given child.
+ * @param {Node|HTMLElement} [el] - base DOM element to manipulate
+ * @param {Node|HTMLElement} child
+ * @returns {boolean}
+ */
+function contains (el, child) {
+  return el !== child && el.contains(child);
+}
+
+/**
+ * Creates dom element from given html string.
+ * @param {string} html
+ * @returns {NodeList}
+ */
+function fromHTML (html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div.childNodes;
+}
+
+/**
+ * Returns document of the base element.
+ * @param {Node|HTMLElement} [el] - base DOM element to manipulate
+ * @returns {HTMLDocument}
+ */
+function getDocument (el) {
+  // if ownerDocument is null then el is the document itself.
+  return el.ownerDocument || el;
+}
+
+/**
+ * Returns window of the base element.
+ * @param {Node|HTMLElement} [el] - base DOM element to manipulate
+ * @returns {Window}
+ */
+function getWindow (el) {
+  return getDocument(el).defaultView;
+}
+
+/**
+ * Returns selection object of the window of base element.
+ * @param {Node|HTMLElement} [el] - base DOM element to manipulate
+ * @returns {Selection}
+ */
+function getSelection$1 (el) {
+  return getWindow(el).getSelection();
+}
+
+/**
+ * Returns first range of the window of base element.
+ * @param {Node|HTMLElement} [el] - base DOM element to manipulate
+ * @returns {Range}
+ */
+function getRange (el) {
+  const selection = getSelection$1(el);
+  let range;
+
+  if (selection.rangeCount > 0) {
+    range = selection.getRangeAt(0);
+  }
+
+  return range;
+}
+
+/**
+ * Inserts base element before refEl.
+ * @param {Node|HTMLElement} [el] - base DOM element to manipulate
+ * @param {Node} refEl - node before which base element will be inserted
+ * @returns {Node} - inserted element
+ */
+function insertBefore (el, refEl) {
+  return refEl.parentNode.insertBefore(el, refEl);
+}
+
+const NODE_TYPE = {
+  ELEMENT_NODE: 1,
+  TEXT_NODE: 3,
+};
+
+/**
+ * Attribute added by default to every highlight.
+ * @type {string}
+ */
+const DATA_ATTR = 'data-highlighted';
+
+/**
+ * Attribute used to group highlight wrappers.
+ * @type {string}
+ */
+const TIMESTAMP_ATTR = 'data-timestamp';
+
+
+/**
+ * Don't highlight content of these tags.
+ * @type {string[]}
+ */
+const IGNORE_TAGS = [
+  'SCRIPT', 'STYLE', 'SELECT', 'OPTION', 'BUTTON', 'OBJECT', 'APPLET', 'VIDEO', 'AUDIO', 'CANVAS', 'EMBED',
+  'PARAM', 'METER', 'PROGRESS',
+];
+
+/**
+ * Returns array of base element parents.
+ * @param {Node|HTMLElement} [el] - base DOM element to manipulate
+ * @returns {HTMLElement[]}
+ */
+function parents (el) {
+  let parent;
+  const path = [];
+
+  while (el.parentNode) {
+    parent = el.parentNode;
+    path.push(parent);
+    el = parent;
+  }
+
+  return path;
+}
+
+/**
+ * Removes base element from DOM.
+ * @param {Node|HTMLElement} [el] - base DOM element to manipulate
+ */
+function remove (el) {
+  el.parentNode.removeChild(el);
+  el = null;
+}
+
+/**
+ * Removes all ranges of the window of base element.
+ * @param {Node|HTMLElement} [el] - base DOM element to manipulate
+ */
+function removeAllRanges (el) {
+  const selection = getSelection(el);
+  selection.removeAllRanges();
+}
+
+/**
+ * Removes class from element.
+ * @param {Node|HTMLElement} [el] - base DOM element to manipulate
+ * @param {string} className
+ */
+function removeClass (el, className) {
+  if (el.classList) {
+    el.classList.remove(className);
+  } else {
+    el.className = el.className.replace(
+      new RegExp(`(^|\\b)${className}(\\b|$)`, 'gi'), ' ',
+    );
+  }
+}
+
+/**
+ * Unwraps base element.
+ * @param {Node|HTMLElement} [el] - base DOM element to manipulate
+ * @returns {Node[]} - child nodes of unwrapped element.
+ */
+function unwrap (el) {
+  const nodes = Array.prototype.slice.call(el.childNodes);
+  let wrapper;
+
+  nodes.forEach((node) => {
+    wrapper = node.parentNode;
+    insertBefore(wrapper, node.parentNode);
+    remove(wrapper);
+  });
+
+  return nodes;
+}
+
+/**
+ * Wraps base element in wrapper element.
+ * @param {Node|HTMLElement} [el] - base DOM element to manipulate
+ * @param {HTMLElement} wrapper
+ * @returns {HTMLElement} wrapper element
+ */
+function wrap (el, wrapper) {
+  if (el.parentNode) {
+    el.parentNode.insertBefore(wrapper, el);
+  }
+
+  wrapper.appendChild(el);
+  return wrapper;
+}
+
+function bindEvents(el, scope) {
+  el.addEventListener('mouseup', scope.highlightHandler.bind(scope));
+  el.addEventListener('touchend', scope.highlightHandler.bind(scope));
+}
+
+/**
+ * Fills undefined values in obj with default properties with the same name from source object.
+ * @param {object} obj - target object
+ * @param {object} source - source object with default values
+ * @returns {object}
+ */
+function defaults(obj, source) {
+  obj = obj || {};
+
+  Object.keys(source).forEach((prop) => {
+    obj[prop] = source[prop];
+  });
+
+  return obj;
+}
+
+/**
+ * Sorts array of DOM elements by its depth in DOM tree.
+ * @param {HTMLElement[]} arr - array to sort.
+ * @param {boolean} descending - order of sort.
+ */
+function sortByDepth(arr, descending) {
+  arr.sort((a, b) => parents(descending ? b : a).length - parents(descending ? a : b).length);
+}
+
+/**
+ * Groups given highlights by timestamp.
+ * @param {Array} highlights
+ * @returns {Array} Grouped highlights.
+ */
+function groupHighlights(highlights) {
+  const order = [];
+  const chunks = {};
+  const grouped = [];
+
+  highlights.forEach((hl) => {
+    const timestamp = hl.getAttribute(TIMESTAMP_ATTR);
+
+    if (typeof chunks[timestamp] === 'undefined') {
+      chunks[timestamp] = [];
+      order.push(timestamp);
+    }
+
+    chunks[timestamp].push(hl);
+  });
+
+  order.forEach((timestamp) => {
+    const group = chunks[timestamp];
+
+    grouped.push({
+      chunks: group,
+      timestamp,
+      toString() {
+        return group.map((h) => h.textContent).join('');
+      },
+    });
+  });
+
+  return grouped;
+}
+
+const { TEXT_NODE } = NODE_TYPE;
+
+/**
+ * Takes range object as parameter and refines it boundaries
+ * @param range
+ * @returns {object} refined boundaries and initial state of highlighting algorithm.
+ */
+function refineRangeBoundaries(range) {
+  let { startContainer } = range;
+  let { endContainer } = range;
+  const ancestor = range.commonAncestorContainer;
+  let goDeeper = true;
+
+  if (range.endOffset === 0) {
+    while (!endContainer.previousSibling && endContainer.parentNode !== ancestor) {
+      endContainer = endContainer.parentNode;
+    }
+    endContainer = endContainer.previousSibling;
+  } else if (endContainer.nodeType === TEXT_NODE) {
+    if (range.endOffset < endContainer.nodeValue.length) {
+      endContainer.splitText(range.endOffset);
+    }
+  } else if (range.endOffset > 0) {
+    endContainer = endContainer.childNodes.item(range.endOffset - 1);
+  }
+
+  if (startContainer.nodeType === TEXT_NODE) {
+    if (range.startOffset === startContainer.nodeValue.length) {
+      goDeeper = false;
+    } else if (range.startOffset > 0) {
+      startContainer = startContainer.splitText(range.startOffset);
+      if (endContainer === startContainer.previousSibling) {
+        endContainer = startContainer;
+      }
+    }
+  } else if (range.startOffset < startContainer.childNodes.length) {
+    startContainer = startContainer.childNodes.item(range.startOffset);
+  } else {
+    startContainer = startContainer.nextSibling;
+  }
+
+  return {
+    startContainer,
+    endContainer,
+    goDeeper,
+  };
+}
+
+function unbindEvents(el, scope) {
+  el.removeEventListener('mouseup', scope.highlightHandler.bind(scope));
+  el.removeEventListener('touchend', scope.highlightHandler.bind(scope));
+}
+
+/**
+ * Returns array without duplicated values.
+ * @param {Array} arr
+ * @returns {Array}
+ */
+function unique(arr) {
+  return arr.filter((value, idx, self) => self.indexOf(value) === idx);
+}
 
 class TextHighlighter {
   /**

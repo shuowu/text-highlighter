@@ -1,19 +1,32 @@
 {
-  "name": "TextHighlighter",
-  "version": "1.2.0",
-  "description": "TextHighlighter",
-  "dependencies": {},
-  "devDependencies": {
-    "grunt": "^0.4.5",
-    "grunt-closurecompiler": "^0.9.9",
-    "grunt-contrib-clean": "^0.6.0",
-    "grunt-contrib-jshint": "^0.10.0",
-    "grunt-jsdoc": "^0.5.7"
-  },
+  "name": "text-highlighter-esm",
+  "version": "1.0.0",
+  "description": "Fork of TextHighlighter(http://mir3z.github.com/texthighlighter/) in ES6 module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mir3z/texthighlighter.git"
+    "url": "https://github.com/shuowu/texthighlighter"
   },
   "author": "mirz <mirz.hq@gmail.com>",
-  "license": "MIT"
+  "maintainers": [
+    "swu <wushuo2010@gmail.com>"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "demos": "http-server demos",
+    "build": "rollup -c",
+    "dev": "rollup -c -w"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^7.1.0",
+    "babel-eslint": "^10.0.3",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.20.0",
+    "http-server": "^0.12.1",
+    "rollup": "^1.31.0"
+  }
 }
