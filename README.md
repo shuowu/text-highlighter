@@ -1,24 +1,39 @@
-##<center>This repository is no longer maintained!</center> 
-
 # TextHighlighter
 
-TextHighlighter allows you to highlight text on web pages. Just select it!
+This is a fork of [mir3z/texhighlighter](https://github.com/mir3z/texthighlighter).
+
+## What's new
+
+1. Migrate to ES module system.
+2. Use `Rollup` as module bundler.
+3. Export in both `es module` and `iife` format for browser use.
+4. Publish in npm.
+
+## Installation
+
+```
+npm install --save-dev texthighlighter
+```
 
 ## Getting started
 
-Download TextHighlighter directly from GitHub or install with Bower:
+Use ES module
 
 ```
-$ bower install text-highlighter
+import TextHighlighter from 'texthighlighter'
 ```
 
-Add script file to head section of your web page:
+Use IIFE
+
+Add minified script file to head section of your web page, the file can be find in `node_modules/texthighlighter-esm/dist/bundle.min.js`. Feel free to upload it into CDN or move to the src folder.
+
+Include minified lib file in HTML
 
 ```
-<script type="text/javascript" src="TextHighlighter.min.js"></script>
+<script type="text/javascript" src="bundle.min.js"></script>
 ```
 
-And use it!
+## How to use
 
 ```
 var hltr = new TextHighlighter(document.body);
@@ -27,7 +42,27 @@ var hltr = new TextHighlighter(document.body);
 For more details see [API reference](http://mir3z.github.io/texthighlighter/doc/index.html) or 
 [Wiki](https://github.com/mir3z/texthighlighter/wiki) pages on GitHub.
 
-Also check Demos section below for examples of usage.
+## Development
+
+Install dependencies
+
+```
+npm install
+```
+
+Local dev
+
+```
+npm run dev
+```
+
+Run static pages (index, demos, doc) locally
+
+```
+npm run static
+```
+
+For more informatin, please refer to `scripts` section in package.json.
 
 ## Features
 

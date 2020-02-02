@@ -1,0 +1,13 @@
+demos
+doc
+node_modules
+src
+test
+.babelrc
+.eslintrc.js
+.gitignore
+hlbg.png
+index.html
+jsdoc.conf.json
+package-lock.json
+rollup.config.js
