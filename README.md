@@ -20,7 +20,7 @@ npm i texthighlighter-esm --save-dev
 Use ES module
 
 ```
-import TextHighlighter from 'texthighlighter'
+import TextHighlighter from 'texthighlighter-esm'
 ```
 
 Use IIFE
