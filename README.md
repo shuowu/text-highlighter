@@ -12,7 +12,7 @@ This is a fork of [mir3z/texhighlighter](https://github.com/mir3z/texthighlighte
 ## Installation
 
 ```
-npm install --save-dev texthighlighter
+npm i texthighlighter-esm --save-dev
 ```
 
 ## Getting started
