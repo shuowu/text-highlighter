@@ -1,4 +1,4 @@
-# TextHighlighter
+# TextHighlighter-esm
 
 This is a fork of [mir3z/texhighlighter](https://github.com/mir3z/texthighlighter).
 
