@@ -1,5 +1,5 @@
 {
-  "name": "@shuowu/text-highlighter",
+  "name": "@yi-note/text-highlighter",
   "version": "1.0.0",
   "description": "Fork of TextHighlighter(http://mir3z.github.com/texthighlighter/) in ES6 module",
   "repository": {
@@ -7,7 +7,7 @@
     "url": "https://github.com/shuowu/texthighlighter"
   },
   "author": "mirz <mirz.hq@gmail.com>",
-  "maintainers": [
+  "contributors": [
     "swu <wushuo2010@gmail.com>"
   ],
   "license": "MIT",

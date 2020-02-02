@@ -12,7 +12,7 @@ This is a fork of [mir3z/texhighlighter](https://github.com/mir3z/texthighlighte
 ## Installation
 
 ```
-npm i @shuowu/text-highlighter --save-dev
+npm i @yi-note/text-highlighter --save-dev
 ```
 
 ## Getting started
@@ -20,12 +20,12 @@ npm i @shuowu/text-highlighter --save-dev
 Use ES module
 
 ```
-import TextHighlighter from '@shuowu/text-highlighter'
+import TextHighlighter from '@yi-note/text-highlighter'
 ```
 
 Use IIFE
 
-Add minified script file to head section of your web page, the file can be find in `node_modules/@shuowu/text-highlighter/dist/bundle.min.js`. Feel free to upload it into CDN or move to the src folder.
+Add minified script file to head section of your web page, the file can be find in `node_modules/@yi-note/text-highlighter/dist/bundle.min.js`. Feel free to upload it into CDN or move to the src folder.
 
 Include minified lib file in HTML
 
