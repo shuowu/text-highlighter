@@ -12,7 +12,7 @@ export default function (el) {
 
   nodes.forEach((node) => {
     wrapper = node.parentNode;
-    insertBefore(wrapper, node.parentNode);
+    insertBefore(node, node.parentNode);
     remove(wrapper);
   });
 

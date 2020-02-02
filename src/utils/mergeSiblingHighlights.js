@@ -5,6 +5,12 @@ import {
 } from '../dom';
 import { NODE_TYPE } from '../constants';
 
+function shouldMerge(current, node) {
+  return node && node.nodeType === NODE_TYPE.ELEMENT_NODE
+        && haveSameColor(current, node)
+        && isHighlight(node);
+}
+
 
 /**
  * Merges sibling highlights and normalizes descendant text nodes.
@@ -13,12 +19,6 @@ import { NODE_TYPE } from '../constants';
  * @param highlights
  */
 export default function (highlights) {
-  function shouldMerge(current, node) {
-    return node && node.nodeType === NODE_TYPE.ELEMENT_NODE
-          && haveSameColor(current, node)
-          && isHighlight(node);
-  }
-
   highlights.forEach((highlight) => {
     const prev = highlight.previousSibling;
     const next = highlight.nextSibling;

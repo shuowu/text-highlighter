@@ -12,15 +12,19 @@ import {
 } from './dom';
 import {
   defaults,
-  bindEvents,
-  unbindEvents,
   refineRangeBoundaries,
   sortByDepth,
   groupHighlights,
   normalizeHighlights,
 } from './utils';
 import {
-  TIMESTAMP_ATTR, NODE_TYPE, IGNORE_TAGS, DATA_ATTR,
+  TIMESTAMP_ATTR,
+  NODE_TYPE,
+  IGNORE_TAGS,
+  DATA_ATTR,
+  DEFAULT_HIGHLIGHT_COLOR,
+  DEFAULT_HIGHLIGHT_CLASS,
+  DEFAULT_HIGHLIGHT_CONTEXT_CLASS,
 } from './constants';
 
 class TextHighlighter {
@@ -48,6 +52,8 @@ class TextHighlighter {
    * @param {string} options.highlightedClass - class added to highlight, 'highlighted' by default.
    * @param {string} options.contextClass - class added to element to which highlighter is applied,
    *  'highlighter-context' by default.
+   * @params {function} options.highlightHandler - function called when selection happen in
+   *  defined DOM element
    * @param {function} options.onRemoveHighlight - function called before highlight is removed.
    *  Highlight is passed as param. Function should return true if highlight should be removed,
    *  or false - to prevent removal.
@@ -64,16 +70,32 @@ class TextHighlighter {
 
     this.el = element;
     this.options = defaults(options, {
-      color: '#ffff7b',
-      highlightedClass: 'highlighted',
-      contextClass: 'highlighter-context',
+      bindEvents: true,
+      color: DEFAULT_HIGHLIGHT_COLOR,
+      highlightedClass: DEFAULT_HIGHLIGHT_CLASS,
+      contextClass: DEFAULT_HIGHLIGHT_CONTEXT_CLASS,
       onRemoveHighlight() { return true; },
       onBeforeHighlight() { return true; },
       onAfterHighlight() { },
     });
 
+    this.highlightHandler = this.options.highlightHandler || this.doHighlight.bind(this);
+
     addClass(this.el, this.options.contextClass);
-    bindEvents(this.el, this);
+
+    if (this.options.bindEvents) {
+      this.bindEvents();
+    }
+  }
+
+  bindEvents() {
+    this.el.addEventListener('mouseup', this.highlightHandler);
+    this.el.addEventListener('touchend', this.highlightHandler);
+  }
+
+  unbindEvents() {
+    this.el.removeEventListener('mouseup', this.highlightHandler);
+    this.el.removeEventListener('touchend', this.highlightHandler);
   }
 
   /**
@@ -81,27 +103,27 @@ class TextHighlighter {
    * Unbinds events and remove context element class.
    */
   destroy() {
-    unbindEvents(this.el, this);
+    if (this.options.bindEvents) {
+      this.unbindEvents();
+    }
     removeClass(this.el, this.options.contextClass);
-  }
-
-  highlightHandler() {
-    this.doHighlight();
   }
 
   /**
    * Highlights current range.
    * @param {boolean} keepRange - Don't remove range after highlighting. Default: false.
+   * @param {Range} range
+   * @returns {number} - Hightlights' timestamp
    */
-  doHighlight(keepRange) {
-    const range = getRange(this.el);
+  doHighlight(range, keepRange) {
+    range = range || getRange(this.el);
     let wrapper;
     let createdHighlights;
     let normalizedHighlights;
     let timestamp;
 
     if (!range || range.collapsed) {
-      return;
+      return 0;
     }
 
     if (this.options.onBeforeHighlight(range) === true) {
@@ -118,6 +140,8 @@ class TextHighlighter {
     if (!keepRange) {
       removeAllRanges(this.el);
     }
+
+    return timestamp;
   }
 
   /**
@@ -199,6 +223,18 @@ class TextHighlighter {
     return this.options.color;
   }
 
+  /**
+   * Update color of existing highlights.
+   * @param {string} color - valid CSS color.
+   * @param {string|number} timestamp - timestamp of existing highlights.
+   */
+  updateHighlightsColor(color, timestamp) {
+    return this.getHighlightsByTimestamp(timestamp).map((node) => {
+      node.style.backgroundColor = color;
+      return node;
+    });
+  }
+
 
   /**
    * Removes highlights from element. If element is a highlight itself, it is removed as well.
@@ -242,6 +278,18 @@ class TextHighlighter {
   }
 
   /**
+   * Removes highlights by highlighted timestamp.
+   * @param {string|number} [timestamp] - timestamp of highlights to be removed
+   */
+  removeHighlightsByTimestamp(
+    timestamp,
+    params,
+  ) {
+    return this.getHighlightsByTimestamp(timestamp, params)
+      .map((node) => this.removeHighlights(node));
+  }
+
+  /**
    * Returns highlights from given container.
    * @param params
    * @param {HTMLElement} [params.container] - return highlights from this element.
@@ -273,6 +321,16 @@ class TextHighlighter {
     }
 
     return highlights;
+  }
+
+  /**
+   * Return highlights by timestamps
+   * @param {string|number} timestamp
+   * @param {object} params - same as params in getHighlights
+   * @returns {Array} - array of highlights.
+   */
+  getHighlightsByTimestamp(timestamp, params) {
+    return this.getHighlights(params).filter((node) => +node.dataset.timestamp === +timestamp);
   }
 
   /**
@@ -358,7 +416,7 @@ class TextHighlighter {
       let idx;
 
       // eslint-disable-next-line no-cond-assign
-      while (idx = hl.path.shift()) {
+      while ((idx = hl.path.shift())) {
         node = node.childNodes[idx];
       }
 
@@ -412,7 +470,7 @@ class TextHighlighter {
 
     if (wnd.find) {
       while (wnd.find(text, caseSens)) {
-        this.doHighlight(true);
+        this.doHighlight(undefined, true);
       }
     } else if (wnd.document.body.createTextRange) {
       const textRange = wnd.document.body.createTextRange();
@@ -424,7 +482,7 @@ class TextHighlighter {
         }
 
         textRange.select();
-        this.doHighlight(true);
+        this.doHighlight(undefined, true);
         textRange.collapse(false);
       }
     }

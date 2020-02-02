@@ -5,12 +5,16 @@
  * @param {object} source - source object with default values
  * @returns {object}
  */
-export default function defaults(obj, source) {
+export default function (obj, source) {
   obj = obj || {};
 
-  Object.keys(source).forEach((prop) => {
-    obj[prop] = source[prop];
-  });
+  // eslint-disable-next-line no-restricted-syntax
+  for (const prop in source) {
+    // eslint-disable-next-line no-prototype-builtins
+    if (source.hasOwnProperty(prop) && obj[prop] === undefined) {
+      obj[prop] = source[prop];
+    }
+  }
 
   return obj;
 }

@@ -1,3 +1,9 @@
+export const DEFAULT_HIGHLIGHT_COLOR = '#ffff7b';
+
+export const DEFAULT_HIGHLIGHT_CLASS = 'highlighted';
+
+export const DEFAULT_HIGHLIGHT_CONTEXT_CLASS = 'highlighter-context';
+
 export const NODE_TYPE = {
   ELEMENT_NODE: 1,
   TEXT_NODE: 3,
