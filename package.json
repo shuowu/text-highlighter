@@ -1,5 +1,5 @@
 {
-  "name": "text-highlighter-esm",
+  "name": "@shuowu/text-highlighter",
   "version": "1.0.0",
   "description": "Fork of TextHighlighter(http://mir3z.github.com/texthighlighter/) in ES6 module",
   "repository": {
